@@ -40,6 +40,7 @@ public class S3TimeBasedRollingPolicy<E> extends TimeBasedRollingPolicy<E> imple
   private boolean rolloverOnExit;
   private boolean prefixTimestamp;
   private boolean prefixIdentifier;
+  private boolean disabledUpload;
 
   private AmazonS3ClientImpl s3Client;
   private ExecutorService executor;
@@ -97,9 +98,10 @@ public class S3TimeBasedRollingPolicy<E> extends TimeBasedRollingPolicy<E> imple
       //Because we need to wait for the file to be rolled over, use a thread so this doesn't block.
       executor.execute(new UploadQueuer(elapsedPeriodsFileName, lastPeriod));
     } else {
-
-      //Upload the active log file without rolling
-      s3Client.uploadFileToS3Async(getActiveFileName(), lastPeriod, true);
+      if (!disabledUpload) {
+        //Upload the active log file without rolling
+        s3Client.uploadFileToS3Async(getActiveFileName(), lastPeriod, true);
+      }
     }
   }
 
@@ -132,7 +134,10 @@ public class S3TimeBasedRollingPolicy<E> extends TimeBasedRollingPolicy<E> imple
     } else {
 
       //Upload the active log file without rolling
-      s3Client.uploadFileToS3Async(getActiveFileName(), lastPeriod, true);
+      if (!disabledUpload) {
+        //Upload the active log file without rolling
+        s3Client.uploadFileToS3Async(getActiveFileName(), lastPeriod, true);
+      }
     }
 
     //Shutdown executor
@@ -207,7 +212,11 @@ public class S3TimeBasedRollingPolicy<E> extends TimeBasedRollingPolicy<E> imple
 
         waitForAsynchronousJobToStop(compressionFuture, "compression");
         waitForAsynchronousJobToStop(cleanUpFuture, "clean-up");
-        s3Client.uploadFileToS3Async(elapsedPeriodsFileName, date);
+
+        if (!disabledUpload) {
+          //Upload the active log file without rolling
+          s3Client.uploadFileToS3Async(elapsedPeriodsFileName, date);
+        }
       }
       catch (Exception ex) {
 
@@ -294,5 +303,13 @@ public class S3TimeBasedRollingPolicy<E> extends TimeBasedRollingPolicy<E> imple
   public void setPrefixIdentifier(boolean prefixIdentifier) {
 
     this.prefixIdentifier = prefixIdentifier;
+  }
+
+  public boolean isDisabledUpload() {
+    return disabledUpload;
+  }
+
+  public void setDisabledUpload(boolean disabledUpload) {
+    this.disabledUpload = disabledUpload;
   }
 }
