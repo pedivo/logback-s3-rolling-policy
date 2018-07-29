@@ -16,59 +16,56 @@
 
 package ch.qos.logback.core.rolling.shutdown;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 public class RollingPolicyContextListener implements ServletContextListener {
 
-    private static final List<RollingPolicyShutdownListener> listeners;
+  private static final List<RollingPolicyShutdownListener> listeners;
 
-    static {
+  static {
+    listeners = new ArrayList<RollingPolicyShutdownListener>();
+  }
 
-        listeners = Lists.newArrayList();
+  /**
+   * Registers a new shutdown hook.
+   *
+   * @param listener The shutdown hook to register.
+   */
+  public static void registerShutdownListener(final RollingPolicyShutdownListener listener) {
+
+    if (!listeners.contains(listener)) {
+
+      listeners.add(listener);
     }
+  }
 
-    /**
-     * Registers a new shutdown hook.
-     *
-     * @param listener The shutdown hook to register.
-     */
-    public static void registerShutdownListener(final RollingPolicyShutdownListener listener) {
+  /**
+   * Deregisters a previously registered shutdown hook.
+   *
+   * @param listener The shutdown hook to deregister.
+   */
+  public static void deregisterShutdownListener(final RollingPolicyShutdownListener listener) {
 
-        if (!listeners.contains( listener )) {
+    if (listeners.contains(listener)) {
 
-            listeners.add( listener );
-        }
+      listeners.remove(listener);
     }
+  }
 
-    /**
-     * Deregisters a previously registered shutdown hook.
-     *
-     * @param listener The shutdown hook to deregister.
-     */
-    public static void deregisterShutdownListener(final RollingPolicyShutdownListener listener) {
+  public void contextInitialized(ServletContextEvent servletContextEvent) {
+    //Empty
+  }
 
-        if (listeners.contains( listener )) {
+  /*
 
-            listeners.remove( listener );
-        }
+   */
+  public void contextDestroyed(ServletContextEvent servletContextEvent) {
+    for (RollingPolicyShutdownListener listener : listeners) {
+      listener.doShutdown();
     }
-
-    @Override
-    public void contextInitialized(ServletContextEvent servletContextEvent) {
-
-        //Empty
-    }
-
-    @Override
-    public void contextDestroyed(ServletContextEvent servletContextEvent) {
-
-        //Upload
-        for (RollingPolicyShutdownListener listener : listeners) {
-
-            listener.doShutdown();
-        }
-    }
+  }
 }

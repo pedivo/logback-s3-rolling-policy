@@ -76,7 +76,6 @@ public class S3FixedWindowRollingPolicy extends FixedWindowRollingPolicy impleme
     /**
      * Shutdown hook that gets called when exiting the application.
      */
-    @Override
     public void doShutdown() {
 
         if (isRolloverOnExit()) {
