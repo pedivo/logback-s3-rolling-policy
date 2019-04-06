@@ -101,6 +101,8 @@ public class S3TimeBasedRollingPolicy<E> extends TimeBasedRollingPolicy<E> imple
       if (!disabledUpload) {
         //Upload the active log file without rolling
         s3Client.uploadFileToS3Async(getActiveFileName(), lastPeriod, true);
+      } else {
+        super.rollover();
       }
     }
   }
